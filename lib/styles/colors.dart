@@ -1,6 +1,5 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:secrekey/styles/text_styles.dart';
 
 const Color cMilkyGreyBlue = Color(0xFF758EB5);
 const Color cBaseBlack = Color(0xFF01020A);
@@ -14,9 +13,9 @@ const Color cTealGreen = Color(0xFF179E99);
 
 const kColorScheme = ColorScheme(
   primary: cNeonBlue,
-  primaryVariant: cDarkerNeonBlue,
+  inversePrimary: cDarkerNeonBlue,
   secondary: cLightGreyBlue,
-  secondaryVariant: cDarkGreyBlue,
+  secondaryContainer: cDarkGreyBlue,
   surface: cDarkGreyBlue,
   background: cBaseBlack,
   error: Colors.red,
@@ -27,3 +26,11 @@ const kColorScheme = ColorScheme(
   onError: Colors.red,
   brightness: Brightness.light,
 );
+
+final kThemeLight = ThemeData.light().copyWith(
+  colorScheme: kColorScheme,
+  brightness: Brightness.light,
+  textTheme: kTextTheme,
+);
+
+final kThemeDark = ThemeData.dark().copyWith();

@@ -1,32 +1,14 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:secrekey/presentation/bloc/tools/secrekey_tools_cubit.dart';
+import 'package:get/get.dart';
+import 'package:secrekey/presentation/controllers/tools_controller.dart';
 import 'package:secrekey/presentation/widgets/save_key_dialog.dart';
 import 'package:secrekey/styles/colors.dart';
 import 'package:secrekey/styles/text_styles.dart';
 
-class SecreKeyToolsPage extends StatefulWidget {
-  static const routeName = '/tools-page';
-
+class SecreKeyToolsPage extends GetView<ToolsController> {
   const SecreKeyToolsPage({Key? key}) : super(key: key);
-
-  @override
-  _SecreKeyToolsPageState createState() => _SecreKeyToolsPageState();
-}
-
-class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
-  final TextEditingController _keyController = TextEditingController();
-  int generatedKeyLength = 4;
-  bool includeNum = false;
-  bool includeSym = false;
-
-  @override
-  void dispose() {
-    super.dispose();
-    _keyController.clear();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +20,7 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Generate Password',
+                'SecreKey',
                 style: kTextTheme.headline5!.copyWith(
                   color: cBaseBlack,
                   fontSize: 28,
@@ -61,67 +43,63 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
-                  child: BlocBuilder<SecreKeyToolsCubit, SecrekeyToolsState>(
-                    builder: (builderContext, state) {
-                      if (state is SecrekeyToolsLoading) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            color: cMistyWhite,
-                          ),
-                        );
-                      } else if (state is NewKeyGenerated) {
-                        _keyController.text = state.newKey;
-                        return TextField(
-                          controller: _keyController,
-                          style: kTextTheme.headline6!.copyWith(
-                            color: Colors.white,
-                            fontSize: 18,
-                          ),
-                          enableInteractiveSelection: false,
-                          readOnly: true,
-                          decoration: InputDecoration(
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                color: Colors.transparent,
-                              ),
-                            ),
-                            filled: true,
-                            fillColor: cMilkyGreyBlue,
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                color: Colors.transparent,
-                              ),
-                            ),
-                            suffixIcon: IconButton(
-                              onPressed: () {
-                                Clipboard.setData(
-                                  ClipboardData(
-                                    text: _keyController.text,
-                                  ),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Password Berhasil Disalin'),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.copy,
-                                color: cMistyWhite,
-                              ),
+                  child: Obx(() {
+                    if (controller.keyController.text.isNotEmpty &&
+                        controller.isLoading.isFalse) {
+                      return TextField(
+                        controller: controller.keyController,
+                        style: kTextTheme.headline6!.copyWith(
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
+                        enableInteractiveSelection: false,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: Colors.transparent,
                             ),
                           ),
-                        );
-                      }
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                          child: Row(
+                          filled: true,
+                          fillColor: cMilkyGreyBlue,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              Clipboard.setData(
+                                ClipboardData(
+                                  text: controller.keyController.text,
+                                ),
+                              );
+                              Get.showSnackbar(
+                                const GetSnackBar(
+                                  duration: Duration(seconds: 2),
+                                  messageText:
+                                      Text('Password Berhasil Disalin'),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.copy,
+                              color: cMistyWhite,
+                            ),
+                          ),
+                        ),
+                      );
+                    } else if (controller.keyController.text.isEmpty &&
+                        controller.isLoading.isFalse) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        child: Obx(
+                          () => Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(
-                              generatedKeyLength,
+                              controller.generatedKeyLength.value,
                               (index) => index > 20
                                   ? Container()
                                   : Text(
@@ -137,18 +115,27 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
                           ),
                         ),
                       );
-                    },
-                  ),
+                    } else {
+                      return SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.55,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: cMilkyGreyBlue,
+                          ),
+                        ),
+                      );
+                    }
+                  }),
                 ),
               ),
               const SizedBox(height: 15),
-              Text(
-                'Length: $generatedKeyLength'.toUpperCase(),
-                style: kTextTheme.subtitle1!.copyWith(
-                  color: cMilkyGreyBlue,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Obx(() => Text(
+                    'Length: ${controller.generatedKeyLength}'.toUpperCase(),
+                    style: kTextTheme.subtitle1!.copyWith(
+                      color: cMilkyGreyBlue,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  )),
               const SizedBox(height: 8),
               Container(
                 height: 56,
@@ -171,18 +158,16 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
                           rangeThumbShape: RoundRangeSliderThumbShape(
                               enabledThumbRadius: 30, disabledThumbRadius: 30),
                         ),
-                        child: Slider(
-                          value: generatedKeyLength.toDouble(),
-                          thumbColor: cMistyWhite,
-                          activeColor: cMistyWhite,
-                          onChanged: (value) {
-                            setState(() {
-                              generatedKeyLength = value.toInt();
-                            });
-                          },
-                          min: 4,
-                          max: 32,
-                        ),
+                        child: Obx(() => Slider(
+                              value: controller.generatedKeyLength.toDouble(),
+                              thumbColor: cMistyWhite,
+                              activeColor: cMistyWhite,
+                              onChanged: (value) {
+                                controller.generatedKeyLength(value.toInt());
+                              },
+                              min: 4,
+                              max: 32,
+                            )),
                       ),
                     ),
                     const Padding(
@@ -217,17 +202,15 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
                       style:
                           kTextTheme.subtitle1!.copyWith(color: Colors.white),
                     ),
-                    CupertinoSwitch(
-                      value: includeNum,
-                      thumbColor: cMistyWhite,
-                      activeColor: cDarkGreyBlue,
-                      trackColor: cLightGreyBlue,
-                      onChanged: (value) {
-                        setState(() {
-                          includeNum = value;
-                        });
-                      },
-                    ),
+                    Obx(() => CupertinoSwitch(
+                          value: controller.includeNum.value,
+                          thumbColor: cMistyWhite,
+                          activeColor: cDarkGreyBlue,
+                          trackColor: cLightGreyBlue,
+                          onChanged: (value) {
+                            controller.includeNum(value);
+                          },
+                        )),
                   ],
                 ),
               ),
@@ -248,17 +231,15 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
                       style:
                           kTextTheme.subtitle1!.copyWith(color: Colors.white),
                     ),
-                    CupertinoSwitch(
-                      value: includeSym,
-                      thumbColor: cMistyWhite,
-                      activeColor: cDarkGreyBlue,
-                      trackColor: cLightGreyBlue,
-                      onChanged: (value) {
-                        setState(() {
-                          includeSym = value;
-                        });
-                      },
-                    ),
+                    Obx(() => CupertinoSwitch(
+                          value: controller.includeSym.value,
+                          thumbColor: cMistyWhite,
+                          activeColor: cDarkGreyBlue,
+                          trackColor: cLightGreyBlue,
+                          onChanged: (value) {
+                            controller.includeSym(value);
+                          },
+                        )),
                   ],
                 ),
               ),
@@ -269,19 +250,19 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   side: BorderSide(
-                    color: _keyController.text.isEmpty
+                    color: controller.keyController.text.isEmpty
                         ? Colors.grey
                         : cMilkyGreyBlue,
                     width: 1.5,
                   ),
-                  primary: _keyController.text.isEmpty
+                  primary: controller.keyController.text.isEmpty
                       ? Colors.grey
                       : cMilkyGreyBlue,
                 ),
-                onPressed: _keyController.text.isEmpty
+                onPressed: controller.keyController.text.isEmpty
                     ? null
                     : () {
-                        _showSavePasswordModal(_keyController.text);
+                        _showSavePasswordModal(controller.keyController.text);
                       },
                 child: SizedBox(
                   height: 56,
@@ -289,7 +270,7 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
                     child: Text(
                       'Save Password'.toUpperCase(),
                       style: kTextTheme.button!.copyWith(
-                        color: _keyController.text.isEmpty
+                        color: controller.keyController.text.isEmpty
                             ? Colors.grey
                             : cMilkyGreyBlue,
                       ),
@@ -298,48 +279,29 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
                 ),
               ),
               const SizedBox(height: 5),
-              BlocConsumer<SecreKeyToolsCubit, SecrekeyToolsState>(
-                listener: (listenerContext, state) {
-                  if (state is KeyGenerateFailed) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: cLightMilkyPink,
-                      ),
-                    );
-                  }
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  primary: cMilkyGreyBlue,
+                  onPrimary: cDarkGreyBlue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () async {
+                  await controller.generateNewKey();
                 },
-                builder: (builderContext, state) {
-                  return ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      primary: cMilkyGreyBlue,
-                      onPrimary: cDarkGreyBlue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  height: 56,
+                  child: Center(
+                    child: Text(
+                      'Generate Password'.toUpperCase(),
+                      style: kTextTheme.button!.copyWith(
+                        color: cMistyWhite,
                       ),
                     ),
-                    onPressed: () {
-                      builderContext.read<SecreKeyToolsCubit>().generateKey(
-                            generatedKeyLength,
-                            includeNum,
-                            includeSym,
-                          );
-                      setState(() {});
-                    },
-                    child: SizedBox(
-                      height: 56,
-                      child: Center(
-                        child: Text(
-                          'Generate Password'.toUpperCase(),
-                          style: kTextTheme.button!.copyWith(
-                            color: cMistyWhite,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
+                  ),
+                ),
               ),
             ],
           ),
@@ -349,11 +311,8 @@ class _SecreKeyToolsPageState extends State<SecreKeyToolsPage> {
   }
 
   void _showSavePasswordModal(String key) {
-    showDialog(
-      context: context,
-      builder: (_) {
-        return SaveKeyDialog(newKey: key);
-      },
+    Get.dialog(
+      SaveKeyDialog(newKey: key),
     );
   }
 }

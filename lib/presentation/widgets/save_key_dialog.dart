@@ -1,29 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:secrekey/presentation/bloc/tools/secrekey_tools_cubit.dart';
+import 'package:get/get.dart';
+import 'package:secrekey/presentation/controllers/tools_controller.dart';
 import 'package:secrekey/styles/colors.dart';
 import 'package:secrekey/styles/text_styles.dart';
 
-class SaveKeyDialog extends StatefulWidget {
-  const SaveKeyDialog({
+class SaveKeyDialog extends StatelessWidget {
+  SaveKeyDialog({
     Key? key,
     required this.newKey,
   }) : super(key: key);
 
   final String newKey;
-
-  @override
-  State<SaveKeyDialog> createState() => _SaveKeyDialogState();
-}
-
-class _SaveKeyDialogState extends State<SaveKeyDialog> {
   final _newKey = TextEditingController();
   final _keyDesc = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final toolsController = Get.find<ToolsController>();
 
   @override
   Widget build(BuildContext context) {
-    _newKey.text = widget.newKey;
+    _newKey.text = newKey;
     return Dialog(
       backgroundColor: cMistyWhite,
       shape: RoundedRectangleBorder(
@@ -90,59 +85,38 @@ class _SaveKeyDialogState extends State<SaveKeyDialog> {
                     if (value!.isEmpty) {
                       return 'Description cannot be empty';
                     }
+                    return null;
                   },
                 ),
                 const SizedBox(
                   height: 15,
                 ),
-                BlocConsumer<SecreKeyToolsCubit, SecrekeyToolsState>(
-                  listener: (listenerContext, state) {
-                    if (state is SaveKeyFailed) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.message),
-                          backgroundColor: cLightMilkyPink,
-                        ),
-                      );
-                    } else if (state is NewKeySaved) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.message),
-                          backgroundColor: cTealGreen,
-                        ),
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    if (_formKey.currentState!.validate()) {
+                      toolsController.saveNewKey(
+                        _newKey.text,
+                        _keyDesc.text,
                       );
                     }
                   },
-                  builder: (builderContext, state) {
-                    return InkWell(
+                  child: Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: cMilkyGreyBlue,
                       borderRadius: BorderRadius.circular(10),
-                      onTap: () {
-                        if (_formKey.currentState!.validate()) {
-                          builderContext.read<SecreKeyToolsCubit>().saveKey(
-                                widget.newKey,
-                                _keyDesc.text,
-                              );
-                        }
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: cMilkyGreyBlue,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Save',
-                            style: kTextTheme.button!.copyWith(
-                              color: cMistyWhite,
-                            ),
-                          ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Save',
+                        style: kTextTheme.button!.copyWith(
+                          color: cMistyWhite,
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ],
             ),
